@@ -46,7 +46,7 @@ the first line and returns `SSH_ERR_INVALID_FORMAT`.
 Which means the base64 decoder is never called at all. Nothing is corrupted.
 The key body is completely fine.
 
-The part I find funny is what's twelve lines further down. There's a loop that
+The part I find funny is what's about ten lines further down. There's a loop that
 walks the body looking for the end marker, and it strips whitespace as it goes
 ([line 2996](https://github.com/openssh/openssh-portable/blob/2593769fb291fe6c542173927698c69e9f9a08b9/sshkey.c#L2996-L3013)).
 It removes `\r` on purpose. So if execution ever reached that loop, carriage
@@ -153,7 +153,7 @@ points at neither of them.
 ## Telling a broken key from a good one
 
 `file` is no help here. It reports `OpenSSH private key` for both, because the
-[magic entry](https://github.com/file/file/blob/master/magic/Magdir/ssh#L8)
+[magic entry](https://github.com/file/file/blob/2e02328dd010b851f21caafdfce1c250d826df74/magic/Magdir/ssh#L8)
 matches the header text without any line terminator, and magic tests run before
 the language tests that would otherwise report CRLF. First test that succeeds
 wins, so the CRLF detection never runs. That's my reading of the man page and
