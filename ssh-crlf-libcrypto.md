@@ -3,6 +3,8 @@ layout: default
 title: "The SSH key error that blames the wrong library"
 ---
 
+# The SSH key error that blames the wrong library
+
 My deploy pipeline broke in August. The key worked fine when I tested it on my
 Windows machine. Same key, same GitHub secret, and CI gave me this:
 
@@ -194,6 +196,26 @@ printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_deploy
 {% endraw %}
 
 ([commit `0219c22`](https://github.com/Trieu-hub/finsight-platform/commit/0219c222370f06dd3361edfd21ad0356a0055d76))
+
+The same commit strips carriage returns from a second secret, the pinned host
+key that goes into known_hosts. I did that on reflex, assuming the same thing
+would happen there.
+
+It doesn't. I went back and tested it properly: a known_hosts file full of CRLF
+still matches fine, and a wrong host key still gets rejected with the usual
+REMOTE HOST IDENTIFICATION HAS CHANGED, exactly like the LF version. Same
+result on OpenSSH 9.6p1 and 10.0p2. The known_hosts parser tolerates a trailing
+\r; the private key path doesn't. So the tr -d '\r' on the key is load-bearing
+and the one on known_hosts is just tidiness.
+
+I'd written a comment in that workflow claiming the opposite, that a stray \r
+would silently break pinning and quietly drop me to trust-on-first-use. That
+was a guess, and it was wrong. I only found out because I was about to publish
+it and decided to check first.
+
+Caveat on the test: I only tried \r at end of line, one host, ed25519, with
+accept-new. A BOM or leading whitespace in the secret is a different question
+and I haven't looked at that.
 
 It's not really a fix though, now that I understand what's happening. It's a
 workaround for the fact that a secret can pick up carriage returns somewhere
